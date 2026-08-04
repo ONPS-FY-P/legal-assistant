@@ -17,11 +17,18 @@ Confidence gate (hybrid-aware):
 - We only refuse to answer (trigger the gate) if the top result is
   weak on BOTH signals -- that's a much more reliable "this genuinely
   isn't in the dataset" signal than either method alone.
+
+Web Search Integration:
+- After generating the Constitution-based answer from Llama (100% trusted),
+  we fetch practical suggestions from the web (FIR filing, complaint procedures,
+  government portals, etc.) using DuckDuckGo Search.
+- This keeps the verified constitutional content separate from practical guidance.
 """
 
 from retriever import Retriever
 from prompt_builder import build_prompt
 from ollama_client import OllamaClient
+from web_search import WebSearchClient, build_practical_suggestions_query
 
 MIN_DENSE_SIMILARITY = 0.40   # cosine similarity floor
 MIN_BM25_SCORE = 6.0           # empirically: real matches scored 9-12 in our testing,
@@ -44,10 +51,18 @@ class RAGEngine:
         print("[rag_engine] Initializing...")
         self.retriever = Retriever(top_k=TOP_K)
         self.ollama = OllamaClient()
+        self.web_search = WebSearchClient()
 
         if not self.ollama.is_available():
             print("[rag_engine] WARNING: Ollama is not reachable. "
                   "Retrieval will work but generation will fail until Ollama is running.")
+        
+        if not self.web_search.is_available():
+            print("[rag_engine] WARNING: DuckDuckGo web search is not available. "
+                  "Practical suggestions will be unavailable until internet access is restored.")
+        else:
+            print("[rag_engine] Web search ready.")
+        
         print("[rag_engine] Ready.")
 
     def _is_confident(self, top_chunk: dict) -> bool:
@@ -59,13 +74,20 @@ class RAGEngine:
     def answer(self, query: str) -> dict:
         """
         Full RAG pipeline: retrieve -> gate on confidence -> build prompt -> generate.
+        Then fetch practical web suggestions (FIR filing, complaint procedures, etc.).
+        
+        Response structure:
+        - constitution_answer: The Llama-generated answer (100% trusted, from Constitution)
+        - practical_suggestions: Web-search results with actionable steps
+        - sources_used: Constitutional articles/schedules cited
         """
         chunks = self.retriever.retrieve(query)
 
         if not chunks or not self._is_confident(chunks[0]):
             return {
                 "query": query,
-                "answer": INSUFFICIENT_INFO_MESSAGE,
+                "constitution_answer": INSUFFICIENT_INFO_MESSAGE,
+                "practical_suggestions": [],
                 "sources_used": [],
                 "confidence_gate_triggered": True,
                 "top_dense_score": chunks[0]["dense_score"] if chunks else None,
@@ -82,11 +104,25 @@ class RAGEngine:
         relevant_chunks = relevant_chunks[:MAX_CONTEXT_CHUNKS]
 
         prompt = build_prompt(query, relevant_chunks)
-        answer_text = self.ollama.generate(prompt)
+        constitution_answer = self.ollama.generate(prompt)
+        
+        # Extract topic from chunks for practical suggestions query
+        primary_source = relevant_chunks[0]
+        if primary_source.get("article_number"):
+            constitutional_topic = f"Article {primary_source['article_number']} {primary_source.get('title', '')}"
+        elif primary_source.get("schedule_name"):
+            constitutional_topic = f"{primary_source['schedule_name']} {primary_source.get('title', '')}"
+        else:
+            constitutional_topic = query
+        
+        # Fetch practical suggestions from web
+        practical_query = build_practical_suggestions_query(constitutional_topic)
+        practical_suggestions = self.web_search.search(practical_query)
 
         return {
             "query": query,
-            "answer": answer_text,
+            "constitution_answer": constitution_answer,
+            "practical_suggestions": practical_suggestions,
             "sources_used": [
                 {
                     "article_number": c.get("article_number"),
@@ -119,6 +155,16 @@ if __name__ == "__main__":
         result = engine.answer(q)
         print(f"\nGate triggered: {result['confidence_gate_triggered']} "
               f"(dense: {result['top_dense_score']}, bm25: {result['top_bm25_score']})")
-        print(f"\nANSWER:\n{result['answer']}")
+        print(f"\nCONSTITUTION ANSWER (from Llama, 100% trusted):\n{result['constitution_answer']}")
         if result["sources_used"]:
             print(f"\nSources: {[s.get('article_number') or s.get('schedule_name') for s in result['sources_used']]}")
+        
+        if result["practical_suggestions"]:
+            print(f"\nPRACTICAL SUGGESTIONS (from web search):")
+            for i, suggestion in enumerate(result["practical_suggestions"], 1):
+                print(f"\n  {i}. {suggestion['title']}")
+                print(f"     Source: {suggestion['source']}")
+                print(f"     URL: {suggestion['url']}")
+                print(f"     Info: {suggestion['snippet'][:150]}...")
+        else:
+            print("\nNo practical suggestions available (web search may be offline).")

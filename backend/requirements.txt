@@ -1,0 +1,15 @@
+# FastAPI & API server
+fastapi
+uvicorn
+pydantic
+
+# RAG Pipeline
+sentence-transformers
+faiss-cpu
+rank-bm25
+
+# Web Search (for practical suggestions)
+ddgs
+
+# HTTP client
+requests
