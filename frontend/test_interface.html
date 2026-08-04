@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Constitution AI - Legal Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .search-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 15px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: #667eea;
+        }
+
+        .search-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-section {
+            padding: 30px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 18px;
+            display: none;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .constitution-answer {
+            background: #e8f5e9;
+            border-left: 5px solid #4caf50;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .constitution-answer.active {
+            display: block;
+        }
+
+        .constitution-answer h2 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .constitution-answer .content {
+            line-height: 1.8;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .practical-suggestions {
+            background: #fff3e0;
+            border-left: 5px solid #ff9800;
+            padding: 25px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .practical-suggestions.active {
+            display: block;
+        }
+
+        .practical-suggestions h2 {
+            color: #ef6c00;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .suggestion-card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .suggestion-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .suggestion-card h3 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .suggestion-card p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .suggestion-card a {
+            display: inline-block;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .suggestion-card a:hover {
+            text-decoration: underline;
+        }
+
+        .source-tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .error-message {
+            background: #ffebee;
+            border-left: 5px solid #f44336;
+            padding: 20px;
+            border-radius: 8px;
+            color: #c62828;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #4caf50;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .badge-web {
+            background: #ff9800;
+        }
+
+        @media (max-width: 600px) {
+            .search-box {
+                flex-direction: column;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🇮🇳 Constitution AI</h1>
+            <p>Your Trusted Legal Assistant with Verified Answers & Practical Guidance</p>
+        </div>
+
+        <div class="search-section">
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="queryInput" 
+                    placeholder="Ask about your constitutional rights (e.g., Article 21, right to education, how to file FIR)..."
+                    onkeypress="handleKeyPress(event)"
+                >
+                <button class="search-btn" id="searchBtn" onclick="searchQuery()">
+                    🔍 Search
+                </button>
+            </div>
+        </div>
+
+        <div class="result-section">
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Searching Constitution & Web Resources...</p>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+
+            <div class="constitution-answer" id="constitutionAnswer">
+                <h2>📜 Constitutional Answer <span class="badge">100% Verified</span></h2>
+                <div class="content" id="constitutionContent"></div>
+            </div>
+
+            <div class="practical-suggestions" id="practicalSuggestions">
+                <h2>💡 Practical Suggestions & Next Steps <span class="badge badge-web">Web Sourced</span></h2>
+                <div id="suggestionsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api/v1/query';
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                searchQuery();
+            }
+        }
+
+        async function searchQuery() {
+            const query = document.getElementById('queryInput').value.trim();
+            if (!query) {
+                showError('Please enter a question');
+                return;
+            }
+
+            // Reset UI
+            hideResults();
+            showLoading();
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayResults(data);
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Failed to fetch results. Please check if the backend is running.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayResults(data) {
+            // Display Constitution Answer
+            if (data.constitution_answer) {
+                document.getElementById('constitutionContent').innerHTML = formatText(data.constitution_answer);
+                document.getElementById('constitutionAnswer').classList.add('active');
+            }
+
+            // Display Practical Suggestions
+            if (data.practical_suggestions && data.practical_suggestions.length > 0) {
+                const suggestionsList = document.getElementById('suggestionsList');
+                suggestionsList.innerHTML = '';
+
+                data.practical_suggestions.forEach(suggestion => {
+                    const card = document.createElement('div');
+                    card.className = 'suggestion-card';
+                    
+                    let html = `<h3>${escapeHtml(suggestion.title)}</h3>`;
+                    if (suggestion.snippet) {
+                        html += `<p>${escapeHtml(suggestion.snippet)}</p>`;
+                    }
+                    if (suggestion.url) {
+                        html += `<a href="${escapeHtml(suggestion.url)}" target="_blank">Visit Resource →</a>`;
+                    }
+                    if (suggestion.source) {
+                        html += `<br><span class="source-tag">${escapeHtml(suggestion.source)}</span>`;
+                    }
+                    
+                    card.innerHTML = html;
+                    suggestionsList.appendChild(card);
+                });
+
+                document.getElementById('practicalSuggestions').classList.add('active');
+            }
+        }
+
+        function formatText(text) {
+            // Convert newlines to <br> and basic formatting
+            return escapeHtml(text)
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>')
+                .replace(/<p>/g, '<p>')
+                .replace(/<\/p>$/, '');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('searchBtn').disabled = true;
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+            document.getElementById('searchBtn').disabled = false;
+        }
+
+        function hideResults() {
+            document.getElementById('constitutionAnswer').classList.remove('active');
+            document.getElementById('practicalSuggestions').classList.remove('active');
+            document.getElementById('errorMessage').classList.remove('active');
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorMessage').classList.add('active');
+            hideLoading();
+        }
+    </script>
+</body>
+</html>
