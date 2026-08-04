@@ -15,6 +15,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 # rag_engine.py lives in ai/inference -- add it to the import path
 _INFERENCE_DIR = Path(__file__).resolve().parent.parent / "ai" / "inference"
@@ -39,6 +40,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Constitution AI", lifespan=lifespan)
+
+# Add CORS middleware for frontend testing
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins for testing
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")

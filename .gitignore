@@ -1,1 +1,1 @@
-Nothing needs to be added to .gitignore since the only change is adding a single HTML file (`backend/test_frontend.html`) which is a source/config file and not a build artifact, dependency, or temporary file.
+Nothing should be ignored in this case, as only a source code file (`backend/api/main.py`) was modified and there are no build artifacts, dependencies, or temporary files in the changes.
