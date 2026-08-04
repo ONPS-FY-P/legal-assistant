@@ -22,9 +22,18 @@ class SourceUsed(BaseModel):
     bm25_score: float | None = None
 
 
+class PracticalSuggestion(BaseModel):
+    """Web-sourced practical guidance (FIR filing, complaint procedures, etc.)"""
+    title: str
+    url: str
+    snippet: str
+    source: str
+
+
 class AskResponse(BaseModel):
     query: str
-    answer: str
+    constitution_answer: str  # Llama-generated, 100% trusted from Constitution
+    practical_suggestions: list[PracticalSuggestion]  # Web-sourced actionable guidance
     sources_used: list[SourceUsed]
     confidence_gate_triggered: bool
     top_dense_score: float | None = None
