@@ -329,14 +329,14 @@
                 resultsContainer.style.display = 'none';
                 searchBtn.disabled = true;
 
-                fetch('http://127.0.0.1:8000/api/v1/query', {
+                fetch('http://127.0.0.1:8000/ask', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ 
-                        query: query,
-                        top_k: 5
+                        query: query
+                        
                     })
                 })
                 .then(response => {
@@ -357,15 +357,15 @@
                     resultsContainer.style.display = 'grid';
                     
                     // Display constitution answer
-                    if (data.response) {
-                        constitutionAnswer.innerHTML = formatText(data.response);
+                    if (data.constitution_answer) {
+                        constitutionAnswer.innerHTML = formatText(data.constitution_answer);
                     } else {
                         constitutionAnswer.innerHTML = '<em>No constitutional answer found for this query.</em>';
                     }
 
                     // Display suggestions
-                    if (data.suggestions && data.suggestions.length > 0) {
-                        updateSuggestions(data.suggestions);
+                    if (data.practical_suggestions && data.practical_suggestions.length > 0) {
+                        updateSuggestions(data.practical_suggestions);
                     } else {
                         suggestionsContainer.innerHTML = '<p class="no-suggestions">No practical suggestions available. The constitutional answer above provides your verified information.</p>';
                     }
