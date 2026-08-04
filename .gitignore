@@ -1,1 +1,1 @@
-Nothing needs to be added to .gitignore since only a single HTML file was added and there are no build artifacts, dependencies, or temporary files in the changes.
+Nothing needs to be added to .gitignore since the only change is adding a single HTML file (`backend/test_frontend.html`) which is a source/config file and not a build artifact, dependency, or temporary file.
