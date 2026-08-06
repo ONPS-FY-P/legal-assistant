@@ -76,3 +76,10 @@ def ask(request: AskRequest):
 
     result = engine.answer(request.query)
     return result
+
+
+# Alias for /api/v1/query to match frontend expectation
+@app.post("/api/v1/query", response_model=AskResponse)
+def api_v1_query(request: AskRequest):
+    """API v1 endpoint for querying - used by frontend"""
+    return ask(request)

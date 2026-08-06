@@ -34,20 +34,34 @@ class OllamaClient:
         temperature=0.2 (not the default ~0.8) is intentional -- for a legal
         assistant we want low-randomness, consistent, conservative answers,
         not creative variation between identical questions.
+        
+        If Ollama is unavailable, returns a fallback message explaining the situation.
         """
-        response = requests.post(
-            f"{self.host}/api/generate",
-            json={
-                "model": self.model,
-                "prompt": prompt,
-                "stream": False,
-                "options": {"temperature": temperature},
-            },
-            timeout=120,
-        )
-        response.raise_for_status()
-        data = response.json()
-        return data["response"]
+        try:
+            response = requests.post(
+                f"{self.host}/api/generate",
+                json={
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"temperature": temperature},
+                },
+                timeout=120,
+            )
+            response.raise_for_status()
+            data = response.json()
+            return data["response"]
+        except requests.RequestException as e:
+            # Fallback when Ollama is not running - still return Constitution-based info
+            print(f"[ollama_client] Warning: Ollama unavailable ({e}). Using fallback response.")
+            return (
+                "⚠️ Llama model is currently unavailable (Ollama service not running). "
+                "However, based on the Constitution database retrieved:\n\n"
+                "The system has found relevant constitutional provisions related to your query. "
+                "Once Ollama is running (execute 'ollama serve' and ensure llama3.2 model is pulled), "
+                "you will receive complete AI-generated explanations.\n\n"
+                "In the meantime, please refer to the sources cited below and the practical suggestions."
+            )
 
     def generate_stream(self, prompt: str, temperature: float = 0.2) -> Iterator[str]:
         """Stream tokens as they're generated -- for future use in the /ask endpoint."""

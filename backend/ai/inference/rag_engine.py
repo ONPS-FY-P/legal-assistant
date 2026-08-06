@@ -115,8 +115,8 @@ class RAGEngine:
         else:
             constitutional_topic = query
         
-        # Fetch practical suggestions from web
-        practical_query = build_practical_suggestions_query(constitutional_topic)
+        # Fetch practical suggestions from web (pass user query for better search)
+        practical_query = build_practical_suggestions_query(constitutional_topic, query)
         practical_suggestions = self.web_search.search(practical_query)
 
         return {
